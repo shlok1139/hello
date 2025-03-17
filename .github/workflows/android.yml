@@ -1,26 +1,42 @@
-name: Android CI
+name: Build Kivy APK
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main  # Change this to your branch name if needed
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: set up JDK 11
-      uses: actions/setup-java@v4
-      with:
-        java-version: '11'
-        distribution: 'temurin'
-        cache: gradle
+      - name: 🛠️ Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew build
+      - name: 📦 Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip openjdk-17-jdk unzip
+          pip install --upgrade pip setuptools
+          pip install buildozer cython
+
+      - name: 🔍 Verify Buildozer Installation
+        run: buildozer --version
+
+      - name: ⚙️ Initialize Buildozer (if not already done)
+        run: |
+          if [ ! -f "buildozer.spec" ]; then
+            buildozer init
+          fi
+
+      - name: 🚀 Build APK
+        run: buildozer -v android debug
+
+      - name: 📤 Upload APK as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kivy-APK
+          path: bin/*.apk
